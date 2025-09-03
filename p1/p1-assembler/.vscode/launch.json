@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Project 1a",
+            "program": "${workspaceFolder}/p1q4",
+            //"args": ["spec.as", "spec.mc"],
+            "cwd": "${workspaceFolder}",
+            //"preLaunchTask": "C/C++: make assembler",
+        	"preRunCommands": ["breakpoint set --name main"]
+		// ^ adds a breakpoint at the beginning of main
+        }
+    ]
+}
