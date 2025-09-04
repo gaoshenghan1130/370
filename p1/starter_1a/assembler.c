@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         printf("error in opening %s\n", inFileString);
         exit(1);
     }
-
+    
     // Check for blank lines in the middle of the code.
     checkForBlankLinesInCode(inFilePtr);
 
@@ -83,10 +83,10 @@ int main(int argc, char **argv)
         /* code */
     }
 
-    for (int i = 0; i < numLabels; ++i)
-    {
-        printf("Label: %s, Address: %d\n", labelAddressPairsStorage[i].label, labelAddressPairsStorage[i].address);
-    }
+    // for (int i = 0; i < numLabels; ++i)
+    // {
+    //     printf("Label: %s, Address: %d\n", labelAddressPairsStorage[i].label, labelAddressPairsStorage[i].address);
+    // }
 
     ////////////////////////////////////////////////////////////////////
     // Second pass: read instructions and output machine code.
@@ -97,7 +97,6 @@ int main(int argc, char **argv)
     while (readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2))
     {
         // line inputed; label, opcode, arg0, arg1, arg2 are set
-
         int output_word = 0;
         // According to the doc, read the opcode first.
         int opcode_num = getOpcode(opcode);
@@ -112,19 +111,14 @@ int main(int argc, char **argv)
             if (opcode_num <= 1)
             {
                 // R-type
-                if (!isNumber(arg0) || !isNumber(arg1) || !isNumber(arg2))
-                {
-                    printf("error: R-type with label arg not implemented\n");
-                    exit(1);
-                }
-                int regA = atoi(arg0);
-                int regB = atoi(arg1);
-                int destReg = atoi(arg2);
+                int regA = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
+                int regB = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg1);
+                int destReg = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg2);
                 output_word |= (regA << 19);
                 output_word |= (regB << 16);
                 output_word |= destReg;
             }
-            else if (opcode_num <= 5)
+            else if (opcode_num <= 4)
             {
                 // I-type
                 int regA = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
@@ -135,7 +129,7 @@ int main(int argc, char **argv)
                 {
                     int offset = 0;
                     // beq
-                    if(isNumber(arg2))
+                    if (isNumber(arg2))
                     {
                         offset = atoi(arg2);
                     }
@@ -143,7 +137,6 @@ int main(int argc, char **argv)
                     {
                         int target = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg2);
                         offset = target - (address + 1);
-                        printf("%d",offset);
                     }
                     if (offset < -32768 || offset > 32767)
                     {
@@ -171,7 +164,7 @@ int main(int argc, char **argv)
                 {
                     // J-type
                     int regA = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
-                    int regB = atoi(arg1);
+                    int regB = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
                     output_word |= (regA << 19);
                     output_word |= (regB << 16);
                 }
@@ -239,9 +232,10 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
     {
         return atoi(label);
     }
+
     for (int i = 0; i < numPairs; ++i)
     {
-        if (!strcmp(pairs[i].label, label))
+        if (strcmp(pairs[i].label, label) == 0)
         {
             return pairs[i].address;
         }
