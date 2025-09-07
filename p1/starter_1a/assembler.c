@@ -21,6 +21,7 @@ struct LabelAddressPair
 struct LabelAddressPair labelAddressPairsStorage[1000];
 
 int readAndParse(FILE *, char *, char *, char *, char *, char *);
+int checkreg(int reg);
 static void checkForBlankLinesInCode(FILE *inFilePtr);
 static inline int isNumber(char *);
 static inline void printHexToFile(FILE *, int);
@@ -51,7 +52,7 @@ int main(int argc, char **argv)
         printf("error in opening %s\n", inFileString);
         exit(1);
     }
-    
+
     // Check for blank lines in the middle of the code.
     checkForBlankLinesInCode(inFilePtr);
 
@@ -114,6 +115,7 @@ int main(int argc, char **argv)
                 int regA = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
                 int regB = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg1);
                 int destReg = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg2);
+                checkreg(regA), checkreg(regB), checkreg(destReg);
                 output_word |= (regA << 19);
                 output_word |= (regB << 16);
                 output_word |= destReg;
@@ -123,6 +125,7 @@ int main(int argc, char **argv)
                 // I-type
                 int regA = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
                 int regB = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg1);
+                checkreg(regA), checkreg(regB);
                 output_word |= (regA << 19);
                 output_word |= (regB << 16);
                 if (opcode_num == 4)
@@ -148,13 +151,13 @@ int main(int argc, char **argv)
                 else
                 {
                     // lw or sw
-                    int target = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg2);
-                    if (target < -32768 || target > 32767)
+                    int offset = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg2);
+                    if (offset < -32768 || offset > 32767)
                     {
-                        printf("error: target out of range\n");
+                        printf("error: offset out of range\n");
                         exit(1);
                     }
-                    output_word |= (target & 0xFFFF);
+                    output_word |= (offset & 0xFFFF);
                 }
             }
             else
@@ -164,7 +167,8 @@ int main(int argc, char **argv)
                 {
                     // J-type
                     int regA = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
-                    int regB = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg0);
+                    int regB = checkNumAndfindLabelAddress(labelAddressPairsStorage, numLabels, arg1);
+                    checkreg(regA), checkreg(regB);
                     output_word |= (regA << 19);
                     output_word |= (regB << 16);
                 }
@@ -207,6 +211,16 @@ int main(int argc, char **argv)
     // printHexToFile(outFilePtr, 123);
 
     return (0);
+}
+
+int checkreg(int reg)
+{
+    if (reg < 0 || reg > 7)
+    {
+        printf("error: register number out of range\n");
+        exit(1);
+    }
+    return reg;
 }
 
 int inputLabelAddressPair(struct LabelAddressPair *pairs, int numPairs, char *label, int address)
