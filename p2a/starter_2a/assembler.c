@@ -252,6 +252,15 @@ int main(int argc, char **argv)
         address++;
     }
 
+    // add unused global labels to symbol table
+    for (int i = 0; i < numLabels; ++i)
+    {
+        if (isupper(labelAddressPairsStorage[i].label[0]))
+        {
+            addSymbol(labelAddressPairsStorage[i].label, labelAddressPairsStorage[i].address, labelAddressPairsStorage[i].address < TEXT_SIZE ? TEXT : DATA);
+        }
+    }
+    // Output the machine code to the file.
     printHead(outFilePtr);
     for (int i = 0; i < alltext_size; ++i)
     {
@@ -335,8 +344,15 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
         printf("error: undefined label %s\n", label);
         exit(1);
     }
-    addReloc(label, opcode, address); // in text, must be in reloc table
-    addSymbol(label, address, UNDEFINED);
+    else if (isupper(label[0]))
+    {
+        addReloc(label, opcode, address); // in text, must be in reloc table
+        addSymbol(label, address, UNDEFINED); // add undefined global symbol
+    }else
+    {
+        printf("error: undefined label %s\n", label);
+        exit(1);
+    }
     return 0;
 }
 
