@@ -1,6 +1,6 @@
 make
 
-./assembler test3.as test3.mc
+./assembler mult.as mult.mc
 
 # for f in test*.as; do
 #     ./assembler "$f" "${f%.as}.mc"

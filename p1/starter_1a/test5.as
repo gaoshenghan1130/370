@@ -1,13 +1,7 @@
-        add     7   7   7       
-        nor     0   0   0       
-        lw      0   1   -32768  
-        sw      0   1   32767   
-        beq     1   1   0       
-        beq     1   19   1       
-        beq     2   8   -1      
-        jalr    7   7           
-        halt
-        noop
-pos     .fill   32767
-neg     .fill   -32768
-zero    .fill   0
+    lw   1 0 one
+    add  0 1 0        
+    lw   2 0 one
+    beq  0 2 wrong    
+    halt
+wrong halt
+one .fill 1

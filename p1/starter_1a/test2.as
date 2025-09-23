@@ -1,10 +1,6 @@
-        add     1   2   3
-        nor     3   4   5
-start   lw      0   1   data
-        sw      0   1   data
-        beq     1   1   end
-        beq     1   2   -1
-        jalr    4   7
-        halt
-end     noop
-data    .fill   42
+        add 1 0 0       ; R1 = 0
+        add 2 0 0       ; R2 = 0
+loop    beq 1 2 end    ; offset = 1 -> should skip next add if R1==R2
+        add 1 1 1       ; R1 += R1 (never executed)
+        beq 1 2 loop    ; offset = -2 (signed) -> jump back to loop
+end     halt
