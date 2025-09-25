@@ -1,3 +1,3 @@
 make
 
-./assembler subone.as subone.o
+./assembler test5.as test5.o

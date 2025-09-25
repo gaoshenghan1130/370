@@ -117,6 +117,7 @@ int main(int argc, char **argv)
                 printf("error: duplicate label %s\n", label);
                 exit(1);
             }
+            addSymbol(label, address, UNDEFINED); // add undefined symbol first, will update later
             numLabels++;
         }
         address++;
@@ -128,12 +129,21 @@ int main(int argc, char **argv)
 
     rewind(inFilePtr);
 
-    // scan all labels after the .fill to see if they are valid
+    // here change symbol stack to determine data or text 
+    for (int i = 0; i < SYMBOL_SIZE; ++i)
+    {
+        printf("Label: %s, Address: %d\n", symbolStack[i].label, symbolStack[i].offset);
+        if (symbolStack[i].offset < TEXT_SIZE)
+        {
+            symbolStack[i].type = TEXT;
+        }
+        else
+        {
+            symbolStack[i].type = DATA;
+        }
+    }
 
-    // for (int i = 0; i < numLabels; ++i)
-    // {
-    //     printf("Label: %s, Address: %d\n", labelAddressPairsStorage[i].label, labelAddressPairsStorage[i].address);
-    // }
+    // scan all labels after the .fill to see if they are valid
 
     ////////////////////////////////////////////////////////////////////
     // Second pass: read instructions and output machine code.
@@ -321,7 +331,7 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
             // Found the label
             if (pairs[i].address >= TEXT_SIZE)
             {
-                addReloc(label, opcode, pairs[i].address); // in data, must be in reloc table
+                addReloc(label, opcode, address); // in data, must be in reloc table
                 if (isupper(label[0]))
                 {
                     addSymbol(label, pairs[i].address, DATA); // add global
@@ -331,10 +341,12 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
             {
                 if (isupper(label[0]))
                 {
-                    addReloc(label, opcode, pairs[i].address); // in text, need to be in reloc table only if global
-
+                    addReloc(label, opcode, pairs[i].address); // in text, need to be in reloc table if global or in fill
                     addSymbol(label, pairs[i].address, pairs[i].address < TEXT_SIZE ? TEXT : DATA); // in text, need to be in reloc table only if global
-                }
+                } else if (strcmp(opcode, ".fill") == 0)
+                {
+                    addReloc(label, opcode, address); // in text, must be in reloc table if in fill
+                } 
             }
             return pairs[i].address;
         }
@@ -555,7 +567,9 @@ void printSymbols(FILE *outFilePtr)
 {
     for (int i = 0; i < SYMBOL_SIZE; ++i)
     {
-        fprintf(outFilePtr, "%s %c %d\n", symbolStack[i].label, symbolStack[i].type, symbolStack[i].offset);
+        int offset = symbolStack[i].offset;
+        offset = symbolStack[i].type == UNDEFINED ? 0 : symbolStack[i].type == TEXT ? offset : offset - TEXT_SIZE;
+        fprintf(outFilePtr, "%s %c %d\n", symbolStack[i].label, symbolStack[i].type, offset);
     }
 }
 
@@ -580,8 +594,7 @@ void addSymbol(char *label, int offset, int type)
     }
     strcpy(symbolStack[SYMBOL_SIZE].label, label);
     symbolStack[SYMBOL_SIZE].type = type;
-    symbolStack[SYMBOL_SIZE].offset = type == UNDEFINED ? 0 : type == TEXT ? offset
-                                                                           : offset - TEXT_SIZE;
+    symbolStack[SYMBOL_SIZE].offset = offset;
     SYMBOL_SIZE++;
 }
 
