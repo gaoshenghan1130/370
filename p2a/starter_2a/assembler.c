@@ -133,7 +133,7 @@ int main(int argc, char **argv)
     // here change symbol stack to determine data or text
     for (int i = 0; i < SYMBOL_SIZE; ++i)
     {
-        if (symbolStack[i].offset <= TEXT_SIZE)
+        if (symbolStack[i].offset < TEXT_SIZE)
         {
             symbolStack[i].type = TEXT;
         }
@@ -351,9 +351,11 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
             // Found the label
             if (pairs[i].address >= TEXT_SIZE)
             {
+                printf("Label %s is in data segment at address %d\n", label, pairs[i].address);
                 addReloc(label, opcode, address); // in data, must be in reloc table
                 if (isupper(label[0]))
                 {
+                    printf("Label %s is global\n", label);
                     addSymbol(label, pairs[i].address, DATA); // add global
                 }
             }
@@ -594,6 +596,7 @@ void printSymbols(FILE *outFilePtr) // print symbol
         int offset = symbolStack[i].offset;
         offset = symbolStack[i].type == UNDEFINED ? 0 : symbolStack[i].type == TEXT ? offset
                                                                                     : offset - TEXT_SIZE;
+                              
         fprintf(outFilePtr, "%s %c %d\n", symbolStack[i].label, symbolStack[i].type, offset);
     }
 }
@@ -609,6 +612,7 @@ void printRelocs(FILE *outFilePtr)
 void addSymbol(char *label, int offset, int type)
 {
     // first check for duplicate label
+    
     for (int i = 0; i < SYMBOL_SIZE; ++i)
     {
         if (strcmp(symbolStack[i].label, label) == 0)
@@ -617,6 +621,7 @@ void addSymbol(char *label, int offset, int type)
             return;
         }
     }
+    printf("Adding symbol: %s, type: %c, offset: %d\n", label, type, offset);
     strcpy(symbolStack[SYMBOL_SIZE].label, label);
     symbolStack[SYMBOL_SIZE].type = type;
     symbolStack[SYMBOL_SIZE].offset = offset;
@@ -634,7 +639,6 @@ void addReloc(char *label, char *opcode, int address)
         // beq uses PC-relative addressing, so no need to add to relocation table
         return;
     }
-    printf("Adding relocation entry: label=%s, opcode=%s, address=%d\n", label, opcode, address);
     strcpy(relocStack[RELOC_SIZE].label, label);
     strcpy(relocStack[RELOC_SIZE].opcode, opcode);
     relocStack[RELOC_SIZE].address = address < TEXT_SIZE ? address : address - TEXT_SIZE;
