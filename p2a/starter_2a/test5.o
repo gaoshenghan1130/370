@@ -8,7 +8,7 @@
 0x00000007
 0x00000064
 Main T 0
-LData D 0
+LData T 5
 GData D 1
 Global D 2
 0 lw LData

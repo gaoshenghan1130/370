@@ -50,8 +50,9 @@ struct LabelAddressPair labelAddressPairsStorage[1000];
 int TEXT_SIZE = 0;
 int DATA_SIZE = 0;
 int SYMBOL_SIZE = 0;
+int GLOBAL_SYMBOL_SIZE = 0;
 int RELOC_SIZE = 0;
-int *HEADER[4] = {&TEXT_SIZE, &DATA_SIZE, &SYMBOL_SIZE, &RELOC_SIZE};
+int *HEADER[4] = {&TEXT_SIZE, &DATA_SIZE, &GLOBAL_SYMBOL_SIZE, &RELOC_SIZE};
 
 int readAndParse(FILE *, char *, char *, char *, char *, char *);
 int checkreg(int reg);
@@ -129,11 +130,10 @@ int main(int argc, char **argv)
 
     rewind(inFilePtr);
 
-    // here change symbol stack to determine data or text 
+    // here change symbol stack to determine data or text
     for (int i = 0; i < SYMBOL_SIZE; ++i)
     {
-        printf("Label: %s, Address: %d\n", symbolStack[i].label, symbolStack[i].offset);
-        if (symbolStack[i].offset < TEXT_SIZE)
+        if (symbolStack[i].offset <= TEXT_SIZE)
         {
             symbolStack[i].type = TEXT;
         }
@@ -143,7 +143,26 @@ int main(int argc, char **argv)
         }
     }
 
-    // scan all labels after the .fill to see if they are valid
+    // // scan all labels after the .fill to add to relocation table if needed
+    // address = 0;
+    // while (readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2))
+    // {
+    //     if (strcmp(opcode, ".fill") != 0)
+    //     {
+    //         address++;
+    //         continue;
+    //     }
+    //     printf("Scanning data segment at address %d\n", address);
+    //     if (!isNumber(arg0))
+    //     {
+    //         addReloc(arg0, opcode, address);
+    //     }
+    //     if (label[0] != '\0')
+    //     {
+    //         addReloc(label, opcode, address);
+    //     }
+    //     address++;
+    // }
 
     ////////////////////////////////////////////////////////////////////
     // Second pass: read instructions and output machine code.
@@ -328,6 +347,7 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
     {
         if (strcmp(pairs[i].label, label) == 0)
         {
+            printf("Label %s found at address %d\n", label, pairs[i].address);
             // Found the label
             if (pairs[i].address >= TEXT_SIZE)
             {
@@ -341,12 +361,13 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
             {
                 if (isupper(label[0]))
                 {
-                    addReloc(label, opcode, pairs[i].address); // in text, need to be in reloc table if global or in fill
+                    addReloc(label, opcode, pairs[i].address);                                      // in text, need to be in reloc table if global or in fill
                     addSymbol(label, pairs[i].address, pairs[i].address < TEXT_SIZE ? TEXT : DATA); // in text, need to be in reloc table only if global
-                } else if (strcmp(opcode, ".fill") == 0)
+                }
+                else if (strcmp(opcode, ".fill") == 0)
                 {
                     addReloc(label, opcode, address); // in text, must be in reloc table if in fill
-                } 
+                }
             }
             return pairs[i].address;
         }
@@ -358,9 +379,10 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
     }
     else if (isupper(label[0]))
     {
-        addReloc(label, opcode, address); // in text, must be in reloc table
+        addReloc(label, opcode, address);     // in text, must be in reloc table
         addSymbol(label, address, UNDEFINED); // add undefined global symbol
-    }else
+    }
+    else
     {
         printf("error: undefined label %s\n", label);
         exit(1);
@@ -563,12 +585,15 @@ void printHead(FILE *outFilePtr)
     fprintf(outFilePtr, "\n");
 }
 
-void printSymbols(FILE *outFilePtr)
+void printSymbols(FILE *outFilePtr) // print symbol
 {
     for (int i = 0; i < SYMBOL_SIZE; ++i)
     {
+        if (islower(symbolStack[i].label[0]))
+            continue;
         int offset = symbolStack[i].offset;
-        offset = symbolStack[i].type == UNDEFINED ? 0 : symbolStack[i].type == TEXT ? offset : offset - TEXT_SIZE;
+        offset = symbolStack[i].type == UNDEFINED ? 0 : symbolStack[i].type == TEXT ? offset
+                                                                                    : offset - TEXT_SIZE;
         fprintf(outFilePtr, "%s %c %d\n", symbolStack[i].label, symbolStack[i].type, offset);
     }
 }
@@ -596,6 +621,10 @@ void addSymbol(char *label, int offset, int type)
     symbolStack[SYMBOL_SIZE].type = type;
     symbolStack[SYMBOL_SIZE].offset = offset;
     SYMBOL_SIZE++;
+    if (isupper(label[0]))
+    {
+        GLOBAL_SYMBOL_SIZE++; // it is not duplicate, so add
+    }
 }
 
 void addReloc(char *label, char *opcode, int address)
@@ -605,6 +634,7 @@ void addReloc(char *label, char *opcode, int address)
         // beq uses PC-relative addressing, so no need to add to relocation table
         return;
     }
+    printf("Adding relocation entry: label=%s, opcode=%s, address=%d\n", label, opcode, address);
     strcpy(relocStack[RELOC_SIZE].label, label);
     strcpy(relocStack[RELOC_SIZE].opcode, opcode);
     relocStack[RELOC_SIZE].address = address < TEXT_SIZE ? address : address - TEXT_SIZE;

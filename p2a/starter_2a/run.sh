@@ -1,3 +1,14 @@
 make
 
-./assembler test5.as test5.o
+./assembler main.as main.o
+
+./assembler subone.as subone.o
+
+
+for i in {0..7}; do
+    echo "----------------------"
+    echo "Running test$i.as..."
+    ./assembler test$i.as test$i.o
+    echo "----------------------"
+    echo " "
+done
