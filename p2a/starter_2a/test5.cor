@@ -1,0 +1,16 @@
+5 3 4 3 
+0x00810005
+0x00C10006
+0x00090002
+0x01500000
+0x01800000
+0x0000002A
+0x00000007
+0x00000064
+Main T 0
+LData D 0
+GData D 1
+Global D 2
+0 lw LData
+1 sw GData
+1 .fill Global
