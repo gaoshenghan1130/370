@@ -363,7 +363,7 @@ int checkNumAndfindLabelAddress(struct LabelAddressPair *pairs, int numPairs, ch
             {
                 if (isupper(label[0]))
                 {
-                    addReloc(label, opcode, pairs[i].address);                                      // in text, need to be in reloc table if global or in fill
+                    addReloc(label, opcode, address);                                      // in text, need to be in reloc table if global or in fill
                     addSymbol(label, pairs[i].address, pairs[i].address < TEXT_SIZE ? TEXT : DATA); // in text, need to be in reloc table only if global
                 }
                 else if (strcmp(opcode, ".fill") == 0)
