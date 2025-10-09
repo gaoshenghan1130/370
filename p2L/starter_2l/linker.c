@@ -218,7 +218,8 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 		// copy data section
 		for (j = 0; j < files[i].dataSize; ++j)
 		{
-			file->data[files[i].dataStartingLine + j] = files[i].data[j];
+			file->data[files[i].dataStartingLine + j - file->textSize] = files[i].data[j];
+			printf("Data line %d: %d\n", files[i].dataStartingLine + j - file->textSize, file->data[files[i].dataStartingLine + j - file->textSize]);
 		}
 	}
 	for (i = 0; i < numFiles; ++i)
