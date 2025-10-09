@@ -296,9 +296,6 @@ void processRelocations(CombinedFiles *file)
 	for (i = 0; i < file->relocationTableSize; ++i)
 	{
 		RelocationTableEntry *reloc = &file->relocTable[i];
-		printf("Processing relocation %d: file %d, offset %d, inst %s, label %s\n",
-			   i, reloc->file, reloc->offset,
-			   reloc->inst, reloc->label);
 		int symbolOffset = -1;
 		// find symbol in symbol table, most likely a global symbol
 		for (j = 0; j < file->symbolTableSize; ++j)
@@ -311,11 +308,15 @@ void processRelocations(CombinedFiles *file)
 		}
 		if (symbolOffset == -1) // the symbol is local
 		{
-			printf("Local label %s not found in symbol table, assuming local\n", reloc->label);
-			symbolOffset = reloc->offset + files[reloc->file].dataStartingLine; // the label is moved to the end of new text section
-			printf("Local label %s moved by %d\n", reloc->label,symbolOffset);
-		}
+			if (isupper(reloc->label[0]))
+			{
+				printf("Error: undefined symbol %s\n", reloc->label);
+				exit(1);
+			}
+			symbolOffset = reloc->offset + files[reloc->file].dataStartingLine - files[reloc->file].textStartingLine; // the label is moved to the end of new text section
+			printf("Local symbol %s resolved to offset %d, with data starting line %d\n", reloc->label, symbolOffset, files[reloc->file].dataStartingLine);
 
+		}
 
 		// replace instruction at offset
 		int instLine = reloc->offset;
@@ -367,7 +368,6 @@ void processRelocations(CombinedFiles *file)
 			}
 			else
 			{
-				printf("Load/store relocation for local label %s at line %d\n", reloc->label, instLine);
 				newOffset = symbolOffset;
 			}
 			if (newOffset < -32768 || newOffset > 32767)
@@ -383,6 +383,8 @@ void processRelocations(CombinedFiles *file)
 			// int originalData = file->data[instLine - file->textSize];
 			int newData = symbolOffset;
 			file->data[instLine - file->textSize] = newData;
+			printf("Relocated .fill at line %d to %d\n", instLine, newData);
+			printf("Data at line %d is now %d\n", instLine - file->textSize, file->data[instLine - file->textSize]);
 		}
 		else
 		{
