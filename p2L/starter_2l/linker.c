@@ -25,7 +25,7 @@ struct SymbolTableEntry
 {
 	char label[7];
 	char location;
-	unsigned int offset;
+	unsigned int offset; // absolute line number in final executable
 };
 
 struct RelocationTableEntry
@@ -219,7 +219,6 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 		for (j = 0; j < files[i].dataSize; ++j)
 		{
 			file->data[files[i].dataStartingLine + j - file->textSize] = files[i].data[j];
-			printf("Data line %d: %d\n", files[i].dataStartingLine + j - file->textSize, file->data[files[i].dataStartingLine + j - file->textSize]);
 		}
 	}
 	for (i = 0; i < numFiles; ++i)
@@ -240,7 +239,7 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 						printf("Error: multiple definitions of symbol %s\n", files[i].symbolTable[j].label);
 						exit(1);
 					}
-					// if one is undefined, update to the defined one
+					// if defined in new file, update location and offset
 					if (file->symbolTable[k].location == 'U' && files[i].symbolTable[j].location != 'U')
 					{
 						file->symbolTable[k].location = files[i].symbolTable[j].location;
@@ -264,15 +263,17 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 																  (files[i].symbolTable[j].location == 'T' ? files[i].textStartingLine : 0) +
 																  (files[i].symbolTable[j].location == 'D' ? files[i].dataStartingLine : 0);
 				file->symbolTableSize++;
+				printf("Loaded symbol %s, location %c, offset %d\n",
+					   file->symbolTable[file->symbolTableSize - 1].label,
+					   file->symbolTable[file->symbolTableSize - 1].location,
+					   file->symbolTable[file->symbolTableSize - 1].offset);
 			}
 		}
 		// load relocation table
 		for (j = 0; j < files[i].relocationTableSize; ++j)
 		{
 			file->relocTable[file->relocationTableSize] = files[i].relocTable[j];
-			file->relocTable[file->relocationTableSize].offset += strcmp(files[i].relocTable[j].inst, ".fill") == 0 ? files[i].dataStartingLine : files[i].textStartingLine; // adjust offset
 			file->relocationTableSize++;
-			printf("Loaded relocation for file %d at offset %d for label %s\n", i, file->relocTable[file->relocationTableSize - 1].offset, file->relocTable[file->relocationTableSize - 1].label);
 		}
 	}
 	// debug print
@@ -303,10 +304,12 @@ void processRelocations(CombinedFiles *file)
 		{
 			if (strcmp(file->symbolTable[j].label, reloc->label) == 0)
 			{
-				symbolOffset = file->symbolTable[j].offset;
+				symbolOffset = file->symbolTable[j].offset; // adjust for data section
+				printf("Global symbol %s resolved to offset %d\n", reloc->label, symbolOffset);
 				break;
 			}
 		}
+
 		if (symbolOffset == -1) // the symbol is local
 		{
 			if (isupper(reloc->label[0]))
@@ -314,13 +317,14 @@ void processRelocations(CombinedFiles *file)
 				printf("Error: undefined symbol %s\n", reloc->label);
 				exit(1);
 			}
-			symbolOffset = reloc->offset + files[reloc->file].dataStartingLine - files[reloc->file].textStartingLine; // the label is moved to the end of new text section
-			printf("Local symbol %s resolved to offset %d, with data starting line %d\n", reloc->label, symbolOffset, files[reloc->file].dataStartingLine);
 
+			symbolOffset = reloc->offset + (reloc->inst[0] == '.' ? files[reloc->file].textStartingLine : files[reloc->file].dataStartingLine); // if .fill, relative to text, because the original offset is in text section
+
+			printf("Local symbol %s resolved to offset %d, with data starting line %d\n", reloc->label, symbolOffset, files[reloc->file].dataStartingLine);
 		}
 
 		// replace instruction at offset
-		int instLine = reloc->offset;
+		int instLine = 0;
 		if (strcmp(reloc->inst, "jalr") == 0 || strcmp(reloc->inst, "halt") == 0 || strcmp(reloc->inst, "noop") == 0)
 		{
 			printf("Error: cannot relocate instruction %s\n", reloc->inst);
@@ -328,6 +332,7 @@ void processRelocations(CombinedFiles *file)
 		}
 		else if (strcmp(reloc->inst, "beq") == 0)
 		{
+			instLine = reloc->offset + files[reloc->file].textStartingLine;
 			int originalInst = file->text[instLine];
 			int opcode = (originalInst >> 22) & 0x3FF;
 			int regA = (originalInst >> 19) & 0x7;
@@ -353,6 +358,7 @@ void processRelocations(CombinedFiles *file)
 		}
 		else if (strcmp(reloc->inst, "lw") == 0 || strcmp(reloc->inst, "sw") == 0)
 		{
+			instLine = reloc->offset + files[reloc->file].textStartingLine;
 			int originalInst = file->text[instLine];
 			int opcode = (originalInst >> 22) & 0x3FF;
 			int regA = (originalInst >> 19) & 0x7;
@@ -363,14 +369,9 @@ void processRelocations(CombinedFiles *file)
 			{
 				offsetField |= 0xFFFF0000;
 			}
-			if (isupper(reloc->label[0]))
-			{
-				newOffset = symbolOffset;
-			}
-			else
-			{
-				newOffset = symbolOffset;
-			}
+
+			newOffset = symbolOffset;
+
 			if (newOffset < -32768 || newOffset > 32767)
 			{
 				printf("Error: offset out of range for instruction %s at line %d\n", reloc->inst, instLine);
@@ -381,11 +382,10 @@ void processRelocations(CombinedFiles *file)
 		}
 		else if (strcmp(reloc->inst, ".fill") == 0)
 		{
-			// int originalData = file->data[instLine - file->textSize];
+			instLine = reloc->offset + files[reloc->file].dataStartingLine - file->textSize; // relative to data section so subtract textSize
 			int newData = symbolOffset;
-			file->data[instLine - file->textSize] = newData;
-			printf("Relocated .fill at line %d to %d\n", instLine, newData);
-			printf("Data at line %d is now %d\n", instLine - file->textSize, file->data[instLine - file->textSize]);
+			file->data[instLine] = newData;
+			printf("Data at line %d is now %d\n", instLine, file->data[instLine]);
 		}
 		else
 		{

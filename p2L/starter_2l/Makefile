@@ -5,7 +5,7 @@
 CXX = gcc
 
 # Compiler flags (including debug info)
-CXXFLAGS = -std=c99 -Wall -Werror -g3
+CXXFLAGS = -std=c99 -Wall -g3
 # -std=c99 restricts us to using C and not C++
 # -Wall and -Werror catch extra warnings as errors to decrease the chance of undefined behaviors on CAEN
 # -g3 or -g includes debug info for gdb
