@@ -5,7 +5,7 @@
 # ./assembler subone.as subone.o
 
 
-for i in {1..7}; do
+for i in {9..11}; do
     echo "----------------------"
     echo "Running test$i.as..."
     ./assembler test$i.as test$i.o
