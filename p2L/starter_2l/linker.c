@@ -229,7 +229,11 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 			// check if symbol already exists
 			if (strcmp(files[i].symbolTable[j].label, "Stack") == 0)
 			{
-				exit(4); // Stack symbol is reserved
+				if (files[i].symbolTable[j].location != 'U')
+				{
+					printf("Error: Stack symbol must be undefined\n");
+					exit(1);
+				}
 			}
 			int exists = 0;
 			for (unsigned int k = 0; k < file->symbolTableSize; ++k)
@@ -241,7 +245,7 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 					if (file->symbolTable[k].location != 'U' && files[i].symbolTable[j].location != 'U')
 					{
 						printf("Error: multiple definitions of symbol %s\n", files[i].symbolTable[j].label);
-						exit(5);
+						exit(1);
 					}
 					// if defined in new file, update location and offset
 					if (file->symbolTable[k].location == 'U' && files[i].symbolTable[j].location != 'U')
@@ -282,7 +286,7 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 		if (file->symbolTable[i].location == 'U' && strcmp(file->symbolTable[i].label, "Stack") != 0)
 		{
 			printf("Error: undefined symbol %s\n", file->symbolTable[i].label);
-			exit(6);
+			exit(1);
 		}
 	}
 }
@@ -314,12 +318,10 @@ void processRelocations(CombinedFiles *file)
 			if (reloc->inst[0] == '.') // .fill
 			{
 				symbolOffset = files[reloc->file].dataStartingLine - files[reloc->file].textStartingLine + files[reloc->file].dataSize; // relative to data section so subtract textSize
-				printf("Symbol %s is local, offset %d\n", reloc->label, symbolOffset);
 			}
 			else // instruction
 			{
 				symbolOffset = files[reloc->file].dataStartingLine - files[reloc->file].textSize; // relative to data section so subtract textSize
-				printf("Symbol %s is local, offset %d\n", reloc->label, symbolOffset);
 			}
 		}
 
@@ -370,9 +372,13 @@ void processRelocations(CombinedFiles *file)
 				offsetField |= 0xFFFF0000;
 			}
 
-			newOffset = symbolOffset + offsetField;
-			printf("With symbolOffset %d and original offset %d\n", symbolOffset, offsetField);
-			printf("Relocating lw/sw at line %d to new offset %d\n", instLine, newOffset);
+			if (isupper(reloc->label[0]))
+			{
+				newOffset = symbolOffset;
+			}else
+			{
+				newOffset = symbolOffset + offsetField;
+			}
 
 			if (newOffset < -32768 || newOffset > 32767)
 			{
@@ -386,9 +392,15 @@ void processRelocations(CombinedFiles *file)
 		{
 			int originalData = file->data[reloc->offset + files[reloc->file].dataStartingLine - file->textSize]; // relative to data section so subtract textSize
 			instLine = reloc->offset + files[reloc->file].dataStartingLine - file->textSize; // relative to data section so subtract textSize
-			int newData = symbolOffset + originalData;
+			int newData = 0;
+			if (isupper(reloc->label[0]))
+			{
+				newData = symbolOffset;
+			}else
+			{
+				newData = symbolOffset + originalData;
+			}
 			file->data[instLine] = newData;
-			printf("Data at line %d is now %d\n", instLine, file->data[instLine]);
 		}
 		else
 		{

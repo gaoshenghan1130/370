@@ -1,0 +1,12 @@
+3 2 3 3 
+0x00810000
+0x00840003
+0x00000001
+0x00000001
+0x00000000
+One D 0
+SubAdr D 1
+Stack U 0
+0 lw Stack
+1 lw One
+1 .fill start
