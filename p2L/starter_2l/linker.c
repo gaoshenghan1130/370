@@ -224,6 +224,13 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 	for (i = 0; i < numFiles; ++i)
 	{
 		// load symbol table
+		// add Stack symbol if not exists
+		file->symbolTable[file->symbolTableSize].location = 'T';
+		strcpy(file->symbolTable[file->symbolTableSize].label, "Stack");
+		file->symbolTable[file->symbolTableSize].offset = file->textSize + file->dataSize;			   // point to the end of data section
+		printf("Adding Stack symbol at offset %d\n", file->symbolTable[file->symbolTableSize].offset); // IGNORE
+		file->symbolTableSize++;
+
 		for (j = 0; j < files[i].symbolTableSize; ++j)
 		{
 			// check if symbol already exists
@@ -280,7 +287,8 @@ void loadSymbolandRelocations(CombinedFiles *file, FileData files[], int numFile
 			file->relocationTableSize++;
 		}
 	}
-	// debug print
+
+	// in case of undefined symbols
 	for (i = 0; i < file->symbolTableSize; ++i)
 	{
 		if (file->symbolTable[i].location == 'U' && strcmp(file->symbolTable[i].label, "Stack") != 0)
@@ -295,6 +303,7 @@ void processRelocations(CombinedFiles *file)
 {
 	for (i = 0; i < file->relocationTableSize; ++i)
 	{
+		printf("Processing relocation %d: file %d, offset %d, inst %s, label %s\n", i, file->relocTable[i].file, file->relocTable[i].offset, file->relocTable[i].inst, file->relocTable[i].label); // IGNORE
 		RelocationTableEntry *reloc = &file->relocTable[i];
 		int symbolOffset = -1;
 		// find symbol in symbol table, most likely a global symbol
@@ -302,6 +311,7 @@ void processRelocations(CombinedFiles *file)
 		{
 			if (strcmp(file->symbolTable[j].label, reloc->label) == 0)
 			{
+				printf("Found symbol %s at offset %d\n", reloc->label, file->symbolTable[j].offset);
 				symbolOffset = file->symbolTable[j].offset; // adjust for data section
 				break;
 			}
@@ -375,7 +385,8 @@ void processRelocations(CombinedFiles *file)
 			if (isupper(reloc->label[0]))
 			{
 				newOffset = symbolOffset;
-			}else
+			}
+			else
 			{
 				newOffset = symbolOffset + offsetField;
 			}
@@ -391,12 +402,13 @@ void processRelocations(CombinedFiles *file)
 		else if (strcmp(reloc->inst, ".fill") == 0)
 		{
 			int originalData = file->data[reloc->offset + files[reloc->file].dataStartingLine - file->textSize]; // relative to data section so subtract textSize
-			instLine = reloc->offset + files[reloc->file].dataStartingLine - file->textSize; // relative to data section so subtract textSize
+			instLine = reloc->offset + files[reloc->file].dataStartingLine - file->textSize;					 // relative to data section so subtract textSize
 			int newData = 0;
 			if (isupper(reloc->label[0]))
 			{
 				newData = symbolOffset;
-			}else
+			}
+			else
 			{
 				newData = symbolOffset + originalData;
 			}
