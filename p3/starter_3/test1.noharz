@@ -1,0 +1,8 @@
+	add	0	1	2
+	lw	1	0	aaa
+	nor	2	3	4
+	noop
+	noop
+	add	4	4	5
+aaa	.fill	45
+	halt

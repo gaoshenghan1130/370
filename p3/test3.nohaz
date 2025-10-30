@@ -1,0 +1,7 @@
+	lw	0	1	five
+	noop
+	noop
+	noop
+	sw	0	1	loc
+five	.fill	5
+six	.fill	6
