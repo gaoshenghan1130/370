@@ -141,10 +141,37 @@ int main(int argc, char *argv[]) {
     newState.IDEX.valB = state.reg[field1(state.IFID.instr)];
     newState.IDEX.offset = convertNum(field2(state.IFID.instr));
 
+    // // hazard detection for LW
+    // int prevOp = opcode(state.IDEX.instr);
+    // int prevDest = field1(state.IDEX.instr); // lw 写回寄存器是 field1
+    // int currOp = opcode(state.IFID.instr);
+    // int currSrcA = field0(state.IFID.instr);
+    // int currSrcB = field1(state.IFID.instr);
+
+    // // lw-use hazard
+    // if (prevOp == LW && (prevDest == currSrcA || prevDest == currSrcB) &&
+    //     currOp != SW) {
+    //   newState.IDEX.instr = NOOPINSTR;
+    //   newState.IFID = state.IFID;
+    //   newState.pc = state.pc;
+    // }
+
     /* ---------------------- EX stage --------------------- */
     // Execute instruction
     newState.EXMEM.instr = state.IDEX.instr;
     newState.EXMEM.branchTarget = state.IDEX.pcPlus1 + state.IDEX.offset;
+
+    // // forwarding
+    // int previousDest = field2(state.MEMWB.instr);
+    // int srcA = field0(state.IDEX.instr);
+    // int srcB = field1(state.IDEX.instr);
+    // if (previousDest == srcA) {
+    //   state.IDEX.valA = state.MEMWB.writeData;
+    // }
+    // if (previousDest == srcB) {
+    //   state.IDEX.valB = state.MEMWB.writeData;
+    // }
+
     newState.EXMEM.eq = (state.IDEX.valA == state.IDEX.valB) ? 1 : 0;
     if (opcode(state.IDEX.instr) == ADD) {
       newState.EXMEM.aluResult = state.IDEX.valA + state.IDEX.valB;
@@ -175,14 +202,15 @@ int main(int argc, char *argv[]) {
     }
 
     /* ---------------------- WB stage --------------------- */
-    // for forwarding
     newState.WBEND.instr = state.MEMWB.instr;
     newState.WBEND.writeData = state.MEMWB.writeData;
     // Write back to register file
     int wbOp = opcode(state.MEMWB.instr);
-    if (wbOp == ADD || wbOp == NOR || wbOp == LW) {
+    if (wbOp == LW) {
       newState.reg[field1(state.MEMWB.instr)] = state.MEMWB.writeData;
-    } /* else: do nothing for other instructions */
+    } else if (wbOp == ADD || wbOp == NOR) {
+      newState.reg[field2(state.MEMWB.instr)] = state.MEMWB.writeData;
+    } // SW and BEQ do not write back
 
     /* ------------------------ END ------------------------ */
     state = newState; /* this is the last statement before end of the loop. It
