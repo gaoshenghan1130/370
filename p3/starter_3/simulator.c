@@ -139,38 +139,73 @@ int main(int argc, char *argv[]) {
     newState.IDEX.pcPlus1 = state.IFID.pcPlus1;
     newState.IDEX.valA = state.reg[field0(state.IFID.instr)];
     newState.IDEX.valB = state.reg[field1(state.IFID.instr)];
-    newState.IDEX.offset = convertNum(field2(state.IFID.instr));
+    if (opcode(state.IFID.instr) == LW ||
+        opcode(state.IFID.instr) == SW ||
+        opcode(state.IFID.instr) == BEQ) {
+      newState.IDEX.offset = convertNum(field2(state.IFID.instr));
+    }
+    else {
+      newState.IDEX.offset = 0; // don't care
+    }
 
-    // // hazard detection for LW
-    // int prevOp = opcode(state.IDEX.instr);
-    // int prevDest = field1(state.IDEX.instr); // lw 写回寄存器是 field1
-    // int currOp = opcode(state.IFID.instr);
-    // int currSrcA = field0(state.IFID.instr);
-    // int currSrcB = field1(state.IFID.instr);
+    // hazard detection for LW
+    int prevOp = opcode(state.IDEX.instr);
+    int prevDest = field1(state.IDEX.instr); // lw 写回寄存器是 field1
+    int currOp = opcode(state.IFID.instr);
+    int currSrcA = field0(state.IFID.instr);
+    int currSrcB = field1(state.IFID.instr);
 
-    // // lw-use hazard
-    // if (prevOp == LW && (prevDest == currSrcA || prevDest == currSrcB) &&
-    //     currOp != SW) {
-    //   newState.IDEX.instr = NOOPINSTR;
-    //   newState.IFID = state.IFID;
-    //   newState.pc = state.pc;
-    // }
+    // lw-use hazard
+    if (prevOp == LW) {
+      // add and nor use both srcA and srcB
+      if (currOp == ADD || currOp == NOR) {
+        if (prevDest == currSrcA || prevDest == currSrcB) {
+          // stall
+          newState.IDEX.instr = NOOPINSTR;
+          newState.IFID = state.IFID;
+          newState.pc = state.pc;
+        }
+      }
+      // lw and beq use srcA
+      else if (currOp == LW || currOp == BEQ) {
+        if (prevDest == currSrcA) {
+          // stall
+          newState.IDEX.instr = NOOPINSTR;
+          newState.IFID = state.IFID;
+          newState.pc = state.pc;
+        }
+      }
+      // sw uses both srcA and srcB
+      else if (currOp == SW) {
+        if (prevDest == currSrcA || prevDest == currSrcB) {
+          // stall
+          newState.IDEX.instr = NOOPINSTR;
+          newState.IFID = state.IFID;
+          newState.pc = state.pc;
+        }
+      }
+    }
 
     /* ---------------------- EX stage --------------------- */
     // Execute instruction
     newState.EXMEM.instr = state.IDEX.instr;
     newState.EXMEM.branchTarget = state.IDEX.pcPlus1 + state.IDEX.offset;
 
-    // // forwarding
-    // int previousDest = field2(state.MEMWB.instr);
-    // int srcA = field0(state.IDEX.instr);
-    // int srcB = field1(state.IDEX.instr);
-    // if (previousDest == srcA) {
-    //   state.IDEX.valA = state.MEMWB.writeData;
-    // }
-    // if (previousDest == srcB) {
-    //   state.IDEX.valB = state.MEMWB.writeData;
-    // }
+    // forwarding
+    int memwbOp = opcode(state.MEMWB.instr);
+    int previousDest;
+    if (memwbOp == LW)
+      previousDest = field1(state.MEMWB.instr);
+    else
+      previousDest = field2(state.MEMWB.instr);
+    int srcA = field0(state.IDEX.instr);
+    int srcB = field1(state.IDEX.instr);
+    if (previousDest == srcA) {
+      state.IDEX.valA = state.MEMWB.writeData;
+    }
+    if (previousDest == srcB) {
+      state.IDEX.valB = state.MEMWB.writeData;
+    }
 
     newState.EXMEM.eq = (state.IDEX.valA == state.IDEX.valB) ? 1 : 0;
     if (opcode(state.IDEX.instr) == ADD) {
@@ -198,7 +233,16 @@ int main(int argc, char *argv[]) {
     } else if (opcode(state.EXMEM.instr) == SW) {
       newState.dataMem[state.EXMEM.aluResult] = state.EXMEM.valB;
     } else {
-      newState.MEMWB.writeData = state.EXMEM.aluResult;
+      newState.MEMWB.writeData =
+          state.EXMEM.aluResult; // for ADD and NOR, for beq don't care
+    }
+
+    // branch hazard: predict not taken
+    if (opcode(state.EXMEM.instr) == BEQ && state.EXMEM.eq) {
+      // flush the following instruction
+      newState.IFID.instr = NOOPINSTR;
+      newState.IDEX.instr = NOOPINSTR;
+      newState.pc = state.EXMEM.branchTarget;
     }
 
     /* ---------------------- WB stage --------------------- */
