@@ -199,59 +199,51 @@ int main(int argc, char *argv[])
 
     /* ---------------------- EX stage --------------------- */
     // Execute instruction
+    // EX stage
     newState.EXMEM.instr = state.IDEX.instr;
     newState.EXMEM.branchTarget = state.IDEX.pcPlus1 + state.IDEX.offset;
 
     int exvalA = state.IDEX.valA;
     int exvalB = state.IDEX.valB;
-
-    // Forwarding for ALU or SW
-    int memwbOp = opcode(state.EXMEM.instr);
-    int previousDest = (memwbOp == LW) ? field1(state.EXMEM.instr) : field2(state.EXMEM.instr);
+    int memwbOp = opcode(state.MEMWB.instr);
+    int previousDest = (memwbOp == LW) ? field1(state.MEMWB.instr) : field2(state.MEMWB.instr);
     int srcA = field0(state.IDEX.instr);
     int srcB = field1(state.IDEX.instr);
 
-    // Forward for ALU (ADD/NOR/BEQ/LW)
-    if (previousDest == srcA && (memwbOp == ADD || memwbOp == NOR || memwbOp == LW))
-    {
-      /// printf("Forwarding applied in EX stage for srcA of instruction 0x%08X\n", state.IDEX.instr);
+    // Forward from MEMWB
+    if (previousDest == srcA && (memwbOp == LW || memwbOp == ADD || memwbOp == NOR))
+      exvalA = state.MEMWB.writeData;
+    if (previousDest == srcB && (memwbOp == LW || memwbOp == ADD || memwbOp == NOR))
+      exvalB = state.MEMWB.writeData;
+
+    // THEN, forward from EXMEM if needed
+    int exmemOp = opcode(state.EXMEM.instr);
+    int exmemDest = (exmemOp == LW) ? field1(state.EXMEM.instr) : field2(state.EXMEM.instr);
+
+    if (exmemDest == srcA && (exmemOp == LW || exmemOp == ADD || exmemOp == NOR))
       exvalA = state.EXMEM.aluResult;
-    }
-    if (previousDest == srcB && (memwbOp == ADD || memwbOp == NOR || memwbOp == LW))
-    {
-      // printf("Forwarding applied in EX stage for srcB of instruction 0x%08X\n", state.IDEX.instr);
+    if (exmemDest == srcB && (exmemOp == LW || exmemOp == ADD || exmemOp == NOR))
       exvalB = state.EXMEM.aluResult;
-    }
 
     newState.EXMEM.valB = exvalB;
 
     newState.EXMEM.eq = (exvalA == exvalB) ? 1 : 0;
     if (opcode(state.IDEX.instr) == ADD)
-    {
       newState.EXMEM.aluResult = exvalA + exvalB;
-    }
     else if (opcode(state.IDEX.instr) == NOR)
-    {
       newState.EXMEM.aluResult = ~(exvalA | exvalB);
-    }
-    else if (opcode(state.IDEX.instr) == LW ||
-             opcode(state.IDEX.instr) == SW)
-    {
+    else if (opcode(state.IDEX.instr) == LW || opcode(state.IDEX.instr) == SW)
       newState.EXMEM.aluResult = exvalA + state.IDEX.offset;
-    }
     else if (opcode(state.IDEX.instr) == BEQ)
     {
       newState.EXMEM.aluResult = 0; // don't care
       if (newState.EXMEM.eq)
-      {
         newState.pc = newState.EXMEM.branchTarget;
-      }
     }
     else
     {
       newState.EXMEM.aluResult = 0; // don't care
     }
-
     /* --------------------- MEM stage --------------------- */
     // Memory access
     newState.MEMWB.instr = state.EXMEM.instr;

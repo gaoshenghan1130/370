@@ -432,6 +432,7 @@ state before cycle 8 starts:
 		writeData = 6
 end state
 Fetched instruction 0x01800000 from address 6
+Forwarding applied in EX stage for srcA of instruction 0x00520002
 
 @@@
 state before cycle 9 starts:
