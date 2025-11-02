@@ -43,7 +43,6 @@ state before cycle 0 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x000A0002 from address 0
 
 @@@
 state before cycle 1 starts:
@@ -84,7 +83,6 @@ state before cycle 1 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00520002 from address 1
 
 @@@
 state before cycle 2 starts:
@@ -125,7 +123,6 @@ state before cycle 2 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00C20000 from address 2
 
 @@@
 state before cycle 3 starts:
@@ -166,7 +163,6 @@ state before cycle 3 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x01800000 from address 3
 
 @@@
 state before cycle 4 starts:
@@ -207,7 +203,6 @@ state before cycle 4 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00000000 from address 4
 
 @@@
 state before cycle 5 starts:
@@ -248,7 +243,6 @@ state before cycle 5 starts:
 		instruction = 0x000A0002 ( add 1 2 2 )
 		writeData = 0
 end state
-Fetched instruction 0x00000000 from address 5
 
 @@@
 state before cycle 6 starts:
@@ -289,7 +283,6 @@ state before cycle 6 starts:
 		instruction = 0x00520002 ( nor 2 2 2 )
 		writeData = -1
 end state
-Fetched instruction 0x00000000 from address 6
 Machine halted
 Total of 7 cycles executed
 Final state of machine:

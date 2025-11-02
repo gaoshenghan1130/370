@@ -55,7 +55,6 @@ state before cycle 0 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00810007 from address 0
 
 @@@
 state before cycle 1 starts:
@@ -102,7 +101,6 @@ state before cycle 1 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00C10009 from address 1
 
 @@@
 state before cycle 2 starts:
@@ -149,7 +147,6 @@ state before cycle 2 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00820008 from address 2
 
 @@@
 state before cycle 3 starts:
@@ -196,7 +193,6 @@ state before cycle 3 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00820008 from address 2
 
 @@@
 state before cycle 4 starts:
@@ -243,7 +239,6 @@ state before cycle 4 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x000A0002 from address 3
 
 @@@
 state before cycle 5 starts:
@@ -290,7 +285,6 @@ state before cycle 5 starts:
 		instruction = 0x00810007 ( lw 0 1 7 )
 		writeData = 5
 end state
-Fetched instruction 0x00520002 from address 4
 
 @@@
 state before cycle 6 starts:
@@ -337,7 +331,6 @@ state before cycle 6 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00520002 from address 4
 
 @@@
 state before cycle 7 starts:
@@ -384,7 +377,6 @@ state before cycle 7 starts:
 		instruction = 0x00C10009 ( sw 0 1 9 )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00C20009 from address 5
 
 @@@
 state before cycle 8 starts:
@@ -431,7 +423,6 @@ state before cycle 8 starts:
 		instruction = 0x00820008 ( lw 0 2 8 )
 		writeData = 6
 end state
-Fetched instruction 0x01800000 from address 6
 
 @@@
 state before cycle 9 starts:
@@ -478,7 +469,6 @@ state before cycle 9 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Fetched instruction 0x00000005 from address 7
 
 @@@
 state before cycle 10 starts:
@@ -525,7 +515,6 @@ state before cycle 10 starts:
 		instruction = 0x000A0002 ( add 1 2 2 )
 		writeData = 11
 end state
-Fetched instruction 0x00000006 from address 8
 
 @@@
 state before cycle 11 starts:
@@ -572,7 +561,6 @@ state before cycle 11 starts:
 		instruction = 0x00520002 ( nor 2 2 2 )
 		writeData = -12
 end state
-Fetched instruction 0x00000000 from address 9
 Machine halted
 Total of 12 cycles executed
 Final state of machine:

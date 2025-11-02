@@ -142,8 +142,6 @@ int main(int argc, char *argv[])
     // Fetch instruction
     newState.pc = state.pc + 1;
     newState.IFID.instr = state.instrMem[state.pc];
-    printf("Fetched instruction 0x%08X from address %d\n",
-           newState.IFID.instr, state.pc);
     newState.IFID.pcPlus1 = state.pc + 1;
 
     /* ---------------------- ID stage --------------------- */
@@ -163,9 +161,9 @@ int main(int argc, char *argv[])
       int currSrcA = field0(state.IFID.instr);
       int currSrcB = field1(state.IFID.instr);
       // add and nor use both srcA and srcB
-      if (currOp == ADD || currOp == NOR)
+      if (currOp == ADD || currOp == NOR || currOp == BEQ)
       {
-        if (prevDest == currSrcA || prevDest == currSrcB)
+        if ( (prevDest == currSrcA && currSrcA != 0) || (prevDest == currSrcB && currSrcB != 0))
         {
           // stall
           newState.IDEX.instr = NOOPINSTR;
@@ -173,10 +171,10 @@ int main(int argc, char *argv[])
           newState.pc = state.pc;
         }
       }
-      // lw and beq use srcA
-      else if (currOp == LW || currOp == BEQ)
+      // lw uses only srcA
+      else if (currOp == LW)
       {
-        if (prevDest == currSrcA)
+        if (prevDest == currSrcA && currSrcA != 0 )
         {
           // stall
           newState.IDEX.instr = NOOPINSTR;
@@ -187,7 +185,7 @@ int main(int argc, char *argv[])
       // sw uses both srcA and srcB
       else if (currOp == SW)
       {
-        if (prevDest == currSrcA || prevDest == currSrcB)
+        if ((prevDest == currSrcA && currSrcA != 0) || (prevDest == currSrcB && currSrcB != 0))
         {
           // stall
           newState.IDEX.instr = NOOPINSTR;
