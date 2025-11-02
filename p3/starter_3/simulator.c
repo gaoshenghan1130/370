@@ -142,6 +142,8 @@ int main(int argc, char *argv[])
     // Fetch instruction
     newState.pc = state.pc + 1;
     newState.IFID.instr = state.instrMem[state.pc];
+    printf("Fetched instruction 0x%08X from address %d\n",
+           newState.IFID.instr, state.pc);
     newState.IFID.pcPlus1 = state.pc + 1;
 
     /* ---------------------- ID stage --------------------- */
@@ -156,7 +158,6 @@ int main(int argc, char *argv[])
     int prevOp = opcode(state.IDEX.instr);
     if (prevOp == LW && state.IDEX.instr != NOOPINSTR)
     {
-      printf("Hazard detected! IDEX.instr=0x%08X, prevOp=%d\n", state.IDEX.instr, prevOp);
       int prevDest = field1(state.IDEX.instr);
       int currOp = opcode(state.IFID.instr);
       int currSrcA = field0(state.IFID.instr);
@@ -170,8 +171,6 @@ int main(int argc, char *argv[])
           newState.IDEX.instr = NOOPINSTR;
           newState.IFID = state.IFID;
           newState.pc = state.pc;
-          state = newState;
-          continue;
         }
       }
       // lw and beq use srcA
@@ -183,8 +182,6 @@ int main(int argc, char *argv[])
           newState.IDEX.instr = NOOPINSTR;
           newState.IFID = state.IFID;
           newState.pc = state.pc;
-          state = newState;
-          continue;
         }
       }
       // sw uses both srcA and srcB
@@ -196,8 +193,6 @@ int main(int argc, char *argv[])
           newState.IDEX.instr = NOOPINSTR;
           newState.IFID = state.IFID;
           newState.pc = state.pc;
-          state = newState;
-          continue;
         }
       }
     }
@@ -211,16 +206,20 @@ int main(int argc, char *argv[])
     int exvalB = state.IDEX.valB;
 
     // Forwarding for ALU or SW
-    int memwbOp = opcode(state.MEMWB.instr);
-    int previousDest = (memwbOp == LW) ? field1(state.MEMWB.instr) : field2(state.MEMWB.instr);
+    int memwbOp = opcode(state.EXMEM.instr);
+    int previousDest = (memwbOp == LW) ? field1(state.EXMEM.instr) : field2(state.EXMEM.instr);
     int srcA = field0(state.IDEX.instr);
     int srcB = field1(state.IDEX.instr);
 
     // Forward for ALU (ADD/NOR/BEQ/LW)
     if (previousDest == srcA && (memwbOp == ADD || memwbOp == NOR || memwbOp == LW))
+    {
+      /// printf("Forwarding applied in EX stage for srcA of instruction 0x%08X\n", state.IDEX.instr);
       exvalA = state.EXMEM.aluResult;
+    }
     if (previousDest == srcB && (memwbOp == ADD || memwbOp == NOR || memwbOp == LW))
     {
+      // printf("Forwarding applied in EX stage for srcB of instruction 0x%08X\n", state.IDEX.instr);
       exvalB = state.EXMEM.aluResult;
     }
 

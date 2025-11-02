@@ -55,6 +55,7 @@ state before cycle 0 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
+Fetched instruction 0x00810007 from address 0
 
 @@@
 state before cycle 1 starts:
@@ -101,6 +102,7 @@ state before cycle 1 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
+Fetched instruction 0x00C10009 from address 1
 
 @@@
 state before cycle 2 starts:
@@ -147,7 +149,7 @@ state before cycle 2 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
-Hazard detected! IDEX.instr=0x00810007, prevOp=2
+Fetched instruction 0x00820008 from address 2
 
 @@@
 state before cycle 3 starts:
@@ -182,10 +184,10 @@ state before cycle 3 starts:
 		valB = 0 (Don't Care)
 		offset = 9 (Don't Care)
 	EX/MEM pipeline register:
-		instruction = 0x01C00000 ( noop )
-		branchTarget 0 (Don't Care)
+		instruction = 0x00810007 ( lw 0 1 7 )
+		branchTarget 8 (Don't Care)
 		eq ? True (Don't Care)
-		aluResult = 0 (Don't Care)
+		aluResult = 7
 		valB = 0 (Don't Care)
 	MEM/WB pipeline register:
 		instruction = 0x01C00000 ( noop )
@@ -194,6 +196,7 @@ state before cycle 3 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
+Fetched instruction 0x00820008 from address 2
 
 @@@
 state before cycle 4 starts:
@@ -234,12 +237,13 @@ state before cycle 4 starts:
 		aluResult = 0 (Don't Care)
 		valB = 0 (Don't Care)
 	MEM/WB pipeline register:
-		instruction = 0x01C00000 ( noop )
-		writeData = 0 (Don't Care)
+		instruction = 0x00810007 ( lw 0 1 7 )
+		writeData = 5
 	WB/END pipeline register:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
+Fetched instruction 0x000A0002 from address 3
 
 @@@
 state before cycle 5 starts:
@@ -257,7 +261,7 @@ state before cycle 5 starts:
 		dataMem[ 9 ] = 0x00000000
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
+		reg[ 1 ] = 5
 		reg[ 2 ] = 0
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
@@ -283,10 +287,10 @@ state before cycle 5 starts:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 	WB/END pipeline register:
-		instruction = 0x01C00000 ( noop )
-		writeData = 0 (Don't Care)
+		instruction = 0x00810007 ( lw 0 1 7 )
+		writeData = 5
 end state
-Hazard detected! IDEX.instr=0x00820008, prevOp=2
+Fetched instruction 0x00520002 from address 4
 
 @@@
 state before cycle 6 starts:
@@ -304,7 +308,7 @@ state before cycle 6 starts:
 		dataMem[ 9 ] = 0x00000000
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
+		reg[ 1 ] = 5
 		reg[ 2 ] = 0
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
@@ -317,22 +321,23 @@ state before cycle 6 starts:
 	ID/EX pipeline register:
 		instruction = 0x01C00000 ( noop )
 		pcPlus1 = 4 (Don't Care)
-		valA = 0 (Don't Care)
+		valA = 5 (Don't Care)
 		valB = 0 (Don't Care)
 		offset = 2 (Don't Care)
 	EX/MEM pipeline register:
-		instruction = 0x00C10009 ( sw 0 1 9 )
+		instruction = 0x00820008 ( lw 0 2 8 )
 		branchTarget 11 (Don't Care)
 		eq ? True (Don't Care)
-		aluResult = 9
-		valB = 0
+		aluResult = 8
+		valB = 0 (Don't Care)
 	MEM/WB pipeline register:
-		instruction = 0x01C00000 ( noop )
+		instruction = 0x00C10009 ( sw 0 1 9 )
 		writeData = 0 (Don't Care)
 	WB/END pipeline register:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
+Fetched instruction 0x00520002 from address 4
 
 @@@
 state before cycle 7 starts:
@@ -350,7 +355,7 @@ state before cycle 7 starts:
 		dataMem[ 9 ] = 0x00000000
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
+		reg[ 1 ] = 5
 		reg[ 2 ] = 0
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
@@ -363,22 +368,23 @@ state before cycle 7 starts:
 	ID/EX pipeline register:
 		instruction = 0x000A0002 ( add 1 2 2 )
 		pcPlus1 = 4
-		valA = 0
+		valA = 5
 		valB = 0
 		offset = 2 (Don't Care)
 	EX/MEM pipeline register:
 		instruction = 0x01C00000 ( noop )
 		branchTarget 6 (Don't Care)
-		eq ? True (Don't Care)
+		eq ? False (Don't Care)
 		aluResult = 0 (Don't Care)
 		valB = 0 (Don't Care)
 	MEM/WB pipeline register:
+		instruction = 0x00820008 ( lw 0 2 8 )
+		writeData = 6
+	WB/END pipeline register:
 		instruction = 0x00C10009 ( sw 0 1 9 )
 		writeData = 0 (Don't Care)
-	WB/END pipeline register:
-		instruction = 0x01C00000 ( noop )
-		writeData = 0 (Don't Care)
 end state
+Fetched instruction 0x00C20009 from address 5
 
 @@@
 state before cycle 8 starts:
@@ -396,8 +402,8 @@ state before cycle 8 starts:
 		dataMem[ 9 ] = 0x00000000
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
-		reg[ 2 ] = 0
+		reg[ 1 ] = 5
+		reg[ 2 ] = 6
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
 		reg[ 5 ] = 0
@@ -415,16 +421,17 @@ state before cycle 8 starts:
 	EX/MEM pipeline register:
 		instruction = 0x000A0002 ( add 1 2 2 )
 		branchTarget 6 (Don't Care)
-		eq ? True (Don't Care)
-		aluResult = 0
+		eq ? False (Don't Care)
+		aluResult = 5
 		valB = 0 (Don't Care)
 	MEM/WB pipeline register:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 	WB/END pipeline register:
-		instruction = 0x00C10009 ( sw 0 1 9 )
-		writeData = 0 (Don't Care)
+		instruction = 0x00820008 ( lw 0 2 8 )
+		writeData = 6
 end state
+Fetched instruction 0x01800000 from address 6
 
 @@@
 state before cycle 9 starts:
@@ -442,8 +449,8 @@ state before cycle 9 starts:
 		dataMem[ 9 ] = 0x00000000
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
-		reg[ 2 ] = 0
+		reg[ 1 ] = 5
+		reg[ 2 ] = 6
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
 		reg[ 5 ] = 0
@@ -456,21 +463,22 @@ state before cycle 9 starts:
 		instruction = 0x00C20009 ( sw 0 2 9 )
 		pcPlus1 = 6
 		valA = 0
-		valB = 0
+		valB = 6
 		offset = 9
 	EX/MEM pipeline register:
 		instruction = 0x00520002 ( nor 2 2 2 )
 		branchTarget 7 (Don't Care)
 		eq ? True (Don't Care)
-		aluResult = -1
-		valB = 0 (Don't Care)
+		aluResult = -6
+		valB = 5 (Don't Care)
 	MEM/WB pipeline register:
 		instruction = 0x000A0002 ( add 1 2 2 )
-		writeData = 0
+		writeData = 5
 	WB/END pipeline register:
 		instruction = 0x01C00000 ( noop )
 		writeData = 0 (Don't Care)
 end state
+Fetched instruction 0x00000005 from address 7
 
 @@@
 state before cycle 10 starts:
@@ -488,8 +496,8 @@ state before cycle 10 starts:
 		dataMem[ 9 ] = 0x00000000
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
-		reg[ 2 ] = 0
+		reg[ 1 ] = 5
+		reg[ 2 ] = 5
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
 		reg[ 5 ] = 0
@@ -509,14 +517,15 @@ state before cycle 10 starts:
 		branchTarget 15 (Don't Care)
 		eq ? False (Don't Care)
 		aluResult = 9
-		valB = -1
+		valB = -6
 	MEM/WB pipeline register:
 		instruction = 0x00520002 ( nor 2 2 2 )
-		writeData = -1
+		writeData = -6
 	WB/END pipeline register:
 		instruction = 0x000A0002 ( add 1 2 2 )
-		writeData = 0
+		writeData = 5
 end state
+Fetched instruction 0x00000006 from address 8
 
 @@@
 state before cycle 11 starts:
@@ -531,11 +540,11 @@ state before cycle 11 starts:
 		dataMem[ 6 ] = 0x01800000
 		dataMem[ 7 ] = 0x00000005
 		dataMem[ 8 ] = 0x00000006
-		dataMem[ 9 ] = 0xFFFFFFFF
+		dataMem[ 9 ] = 0xFFFFFFFA
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
-		reg[ 2 ] = -1
+		reg[ 1 ] = 5
+		reg[ 2 ] = -6
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
 		reg[ 5 ] = 0
@@ -558,11 +567,12 @@ state before cycle 11 starts:
 		valB = 0 (Don't Care)
 	MEM/WB pipeline register:
 		instruction = 0x00C20009 ( sw 0 2 9 )
-		writeData = -1 (Don't Care)
+		writeData = -6 (Don't Care)
 	WB/END pipeline register:
 		instruction = 0x00520002 ( nor 2 2 2 )
-		writeData = -1
+		writeData = -6
 end state
+Fetched instruction 0x00000000 from address 9
 Machine halted
 Total of 12 cycles executed
 Final state of machine:
@@ -580,11 +590,11 @@ state before cycle 12 starts:
 		dataMem[ 6 ] = 0x01800000
 		dataMem[ 7 ] = 0x00000005
 		dataMem[ 8 ] = 0x00000006
-		dataMem[ 9 ] = 0xFFFFFFFF
+		dataMem[ 9 ] = 0xFFFFFFFA
 	registers:
 		reg[ 0 ] = 0
-		reg[ 1 ] = 0
-		reg[ 2 ] = -1
+		reg[ 1 ] = 5
+		reg[ 2 ] = -6
 		reg[ 3 ] = 0
 		reg[ 4 ] = 0
 		reg[ 5 ] = 0
@@ -610,5 +620,5 @@ state before cycle 12 starts:
 		writeData = 0 (Don't Care)
 	WB/END pipeline register:
 		instruction = 0x00C20009 ( sw 0 2 9 )
-		writeData = -1 (Don't Care)
+		writeData = -6 (Don't Care)
 end state
