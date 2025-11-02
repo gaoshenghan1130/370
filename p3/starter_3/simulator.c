@@ -23,17 +23,19 @@
 #define HALT 6
 #define NOOP 7
 
-const char *opcode_to_str_map[] = {"add", "nor",  "lw",   "sw",
+const char *opcode_to_str_map[] = {"add", "nor", "lw", "sw",
                                    "beq", "jalr", "halt", "noop"};
 
 #define NOOPINSTR (NOOP << 22)
 
-typedef struct IFIDStruct {
+typedef struct IFIDStruct
+{
   int instr;
   int pcPlus1;
 } IFIDType;
 
-typedef struct IDEXStruct {
+typedef struct IDEXStruct
+{
   int instr;
   int pcPlus1;
   int valA;
@@ -41,7 +43,8 @@ typedef struct IDEXStruct {
   int offset;
 } IDEXType;
 
-typedef struct EXMEMStruct {
+typedef struct EXMEMStruct
+{
   int instr;
   int branchTarget;
   int eq;
@@ -49,17 +52,20 @@ typedef struct EXMEMStruct {
   int valB;
 } EXMEMType;
 
-typedef struct MEMWBStruct {
+typedef struct MEMWBStruct
+{
   int instr;
   int writeData;
 } MEMWBType;
 
-typedef struct WBENDStruct {
+typedef struct WBENDStruct
+{
   int instr;
   int writeData;
 } WBENDType;
 
-typedef struct stateStruct {
+typedef struct stateStruct
+{
   unsigned int numMemory;
   unsigned int cycles; // number of cycles run so far
   int pc;
@@ -82,7 +88,8 @@ static inline int field1(int instruction) { return (instruction >> 16) & 0x7; }
 static inline int field2(int instruction) { return instruction & 0xFFFF; }
 
 // convert a 16-bit number into a 32-bit Linux integer
-static inline int convertNum(int num) {
+static inline int convertNum(int num)
+{
   return num - ((num & (1 << 15)) ? 1 << 16 : 0);
 }
 
@@ -90,7 +97,8 @@ void printState(stateType *);
 void printInstruction(int);
 void readMachineCode(stateType *, char *);
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
   /* Declare state and newState.
      Note these have static lifetime so that instrMem and
@@ -98,7 +106,8 @@ int main(int argc, char *argv[]) {
 
   static stateType state, newState;
 
-  if (argc != 2) {
+  if (argc != 2)
+  {
     printf("error: usage: %s <machine-code file>\n", argv[0]);
     exit(1);
   }
@@ -109,7 +118,8 @@ int main(int argc, char *argv[]) {
 
   state.pc = 0;
   state.cycles = 0;
-  for (int i = 0; i < NUMREGS; i++) {
+  for (int i = 0; i < NUMREGS; i++)
+  {
     state.reg[i] = 0;
   }
   state.IFID.instr = NOOPINSTR;
@@ -122,7 +132,8 @@ int main(int argc, char *argv[]) {
 
   newState = state;
 
-  while (opcode(state.MEMWB.instr) != HALT) {
+  while (opcode(state.MEMWB.instr) != HALT)
+  {
     printState(&state);
 
     newState.cycles += 1;
@@ -139,49 +150,54 @@ int main(int argc, char *argv[]) {
     newState.IDEX.pcPlus1 = state.IFID.pcPlus1;
     newState.IDEX.valA = state.reg[field0(state.IFID.instr)];
     newState.IDEX.valB = state.reg[field1(state.IFID.instr)];
-    if (opcode(state.IFID.instr) == LW ||
-        opcode(state.IFID.instr) == SW ||
-        opcode(state.IFID.instr) == BEQ) {
-      newState.IDEX.offset = convertNum(field2(state.IFID.instr));
-    }
-    else {
-      newState.IDEX.offset = 0; // don't care
-    }
+    newState.IDEX.offset = convertNum(field2(state.IFID.instr));
 
     // hazard detection for LW
     int prevOp = opcode(state.IDEX.instr);
-    int prevDest = field1(state.IDEX.instr); // lw 写回寄存器是 field1
-    int currOp = opcode(state.IFID.instr);
-    int currSrcA = field0(state.IFID.instr);
-    int currSrcB = field1(state.IFID.instr);
-
-    // lw-use hazard
-    if (prevOp == LW) {
+    if (prevOp == LW && state.IDEX.instr != NOOPINSTR)
+    {
+      printf("Hazard detected! IDEX.instr=0x%08X, prevOp=%d\n", state.IDEX.instr, prevOp);
+      int prevDest = field1(state.IDEX.instr);
+      int currOp = opcode(state.IFID.instr);
+      int currSrcA = field0(state.IFID.instr);
+      int currSrcB = field1(state.IFID.instr);
       // add and nor use both srcA and srcB
-      if (currOp == ADD || currOp == NOR) {
-        if (prevDest == currSrcA || prevDest == currSrcB) {
+      if (currOp == ADD || currOp == NOR)
+      {
+        if (prevDest == currSrcA || prevDest == currSrcB)
+        {
           // stall
           newState.IDEX.instr = NOOPINSTR;
           newState.IFID = state.IFID;
           newState.pc = state.pc;
+          state = newState;
+          continue;
         }
       }
       // lw and beq use srcA
-      else if (currOp == LW || currOp == BEQ) {
-        if (prevDest == currSrcA) {
+      else if (currOp == LW || currOp == BEQ)
+      {
+        if (prevDest == currSrcA)
+        {
           // stall
           newState.IDEX.instr = NOOPINSTR;
           newState.IFID = state.IFID;
           newState.pc = state.pc;
+          state = newState;
+          continue;
         }
       }
       // sw uses both srcA and srcB
-      else if (currOp == SW) {
-        if (prevDest == currSrcA || prevDest == currSrcB) {
+      else if (currOp == SW)
+      {
+        if (prevDest == currSrcA || prevDest == currSrcB)
+        {
           // stall
           newState.IDEX.instr = NOOPINSTR;
           newState.IFID = state.IFID;
           newState.pc = state.pc;
+          state = newState;
+          continue;
         }
       }
     }
@@ -191,54 +207,72 @@ int main(int argc, char *argv[]) {
     newState.EXMEM.instr = state.IDEX.instr;
     newState.EXMEM.branchTarget = state.IDEX.pcPlus1 + state.IDEX.offset;
 
-    // forwarding
+    int exvalA = state.IDEX.valA;
+    int exvalB = state.IDEX.valB;
+
+    // Forwarding for ALU or SW
     int memwbOp = opcode(state.MEMWB.instr);
-    int previousDest;
-    if (memwbOp == LW)
-      previousDest = field1(state.MEMWB.instr);
-    else
-      previousDest = field2(state.MEMWB.instr);
+    int previousDest = (memwbOp == LW) ? field1(state.MEMWB.instr) : field2(state.MEMWB.instr);
     int srcA = field0(state.IDEX.instr);
     int srcB = field1(state.IDEX.instr);
-    if (previousDest == srcA) {
-      state.IDEX.valA = state.MEMWB.writeData;
-    }
-    if (previousDest == srcB) {
-      state.IDEX.valB = state.MEMWB.writeData;
+
+    // Forward for ALU (ADD/NOR/BEQ/LW)
+    if (previousDest == srcA && (memwbOp == ADD || memwbOp == NOR || memwbOp == LW))
+      exvalA = state.EXMEM.aluResult;
+    if (previousDest == srcB && (memwbOp == ADD || memwbOp == NOR || memwbOp == LW))
+    {
+      exvalB = state.EXMEM.aluResult;
     }
 
-    newState.EXMEM.eq = (state.IDEX.valA == state.IDEX.valB) ? 1 : 0;
-    if (opcode(state.IDEX.instr) == ADD) {
-      newState.EXMEM.aluResult = state.IDEX.valA + state.IDEX.valB;
-    } else if (opcode(state.IDEX.instr) == NOR) {
-      newState.EXMEM.aluResult = ~(state.IDEX.valA | state.IDEX.valB);
-    } else if (opcode(state.IDEX.instr) == LW ||
-               opcode(state.IDEX.instr) == SW) {
-      newState.EXMEM.aluResult = state.IDEX.valA + state.IDEX.offset;
-    } else if (opcode(state.IDEX.instr) == BEQ) {
+    newState.EXMEM.valB = exvalB;
+
+    newState.EXMEM.eq = (exvalA == exvalB) ? 1 : 0;
+    if (opcode(state.IDEX.instr) == ADD)
+    {
+      newState.EXMEM.aluResult = exvalA + exvalB;
+    }
+    else if (opcode(state.IDEX.instr) == NOR)
+    {
+      newState.EXMEM.aluResult = ~(exvalA | exvalB);
+    }
+    else if (opcode(state.IDEX.instr) == LW ||
+             opcode(state.IDEX.instr) == SW)
+    {
+      newState.EXMEM.aluResult = exvalA + state.IDEX.offset;
+    }
+    else if (opcode(state.IDEX.instr) == BEQ)
+    {
       newState.EXMEM.aluResult = 0; // don't care
-      if (newState.EXMEM.eq) {
+      if (newState.EXMEM.eq)
+      {
         newState.pc = newState.EXMEM.branchTarget;
       }
-    } else {
+    }
+    else
+    {
       newState.EXMEM.aluResult = 0; // don't care
     }
-    newState.EXMEM.valB = state.IDEX.valB;
 
     /* --------------------- MEM stage --------------------- */
     // Memory access
     newState.MEMWB.instr = state.EXMEM.instr;
-    if (opcode(state.EXMEM.instr) == LW) {
+    if (opcode(state.EXMEM.instr) == LW)
+    {
       newState.MEMWB.writeData = state.dataMem[state.EXMEM.aluResult];
-    } else if (opcode(state.EXMEM.instr) == SW) {
+    }
+    else if (opcode(state.EXMEM.instr) == SW)
+    {
       newState.dataMem[state.EXMEM.aluResult] = state.EXMEM.valB;
-    } else {
+    }
+    else
+    {
       newState.MEMWB.writeData =
           state.EXMEM.aluResult; // for ADD and NOR, for beq don't care
     }
 
     // branch hazard: predict not taken
-    if (opcode(state.EXMEM.instr) == BEQ && state.EXMEM.eq) {
+    if (opcode(state.EXMEM.instr) == BEQ && state.EXMEM.eq)
+    {
       // flush the following instruction
       newState.IFID.instr = NOOPINSTR;
       newState.IDEX.instr = NOOPINSTR;
@@ -250,9 +284,12 @@ int main(int argc, char *argv[]) {
     newState.WBEND.writeData = state.MEMWB.writeData;
     // Write back to register file
     int wbOp = opcode(state.MEMWB.instr);
-    if (wbOp == LW) {
+    if (wbOp == LW)
+    {
       newState.reg[field1(state.MEMWB.instr)] = state.MEMWB.writeData;
-    } else if (wbOp == ADD || wbOp == NOR) {
+    }
+    else if (wbOp == ADD || wbOp == NOR)
+    {
       newState.reg[field2(state.MEMWB.instr)] = state.MEMWB.writeData;
     } // SW and BEQ do not write back
 
@@ -271,14 +308,17 @@ int main(int argc, char *argv[]) {
  * DO NOT MODIFY ANY OF THE CODE BELOW.
  */
 
-void printInstruction(int instr) {
+void printInstruction(int instr)
+{
   const char *instr_opcode_str;
   int instr_opcode = opcode(instr);
-  if (ADD <= instr_opcode && instr_opcode <= NOOP) {
+  if (ADD <= instr_opcode && instr_opcode <= NOOP)
+  {
     instr_opcode_str = opcode_to_str_map[instr_opcode];
   }
 
-  switch (instr_opcode) {
+  switch (instr_opcode)
+  {
   case ADD:
   case NOR:
   case LW:
@@ -300,17 +340,20 @@ void printInstruction(int instr) {
   }
 }
 
-void printState(stateType *statePtr) {
+void printState(stateType *statePtr)
+{
   printf("\n@@@\n");
   printf("state before cycle %d starts:\n", statePtr->cycles);
   printf("\tpc = %d\n", statePtr->pc);
 
   printf("\tdata memory:\n");
-  for (int i = 0; i < statePtr->numMemory; ++i) {
+  for (int i = 0; i < statePtr->numMemory; ++i)
+  {
     printf("\t\tdataMem[ %d ] = 0x%08X\n", i, statePtr->dataMem[i]);
   }
   printf("\tregisters:\n");
-  for (int i = 0; i < NUMREGS; ++i) {
+  for (int i = 0; i < NUMREGS; ++i)
+  {
     printf("\t\treg[ %d ] = %d\n", i, statePtr->reg[i]);
   }
 
@@ -320,7 +363,8 @@ void printState(stateType *statePtr) {
   printInstruction(statePtr->IFID.instr);
   printf(" )\n");
   printf("\t\tpcPlus1 = %d", statePtr->IFID.pcPlus1);
-  if (opcode(statePtr->IFID.instr) == NOOP) {
+  if (opcode(statePtr->IFID.instr) == NOOP)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
@@ -332,22 +376,26 @@ void printState(stateType *statePtr) {
   printInstruction(statePtr->IDEX.instr);
   printf(" )\n");
   printf("\t\tpcPlus1 = %d", statePtr->IDEX.pcPlus1);
-  if (idexOp == NOOP) {
+  if (idexOp == NOOP)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
   printf("\t\tvalA = %d", statePtr->IDEX.valA);
-  if (idexOp >= HALT || idexOp < 0) {
+  if (idexOp >= HALT || idexOp < 0)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
   printf("\t\tvalB = %d", statePtr->IDEX.valB);
-  if (idexOp == LW || idexOp > BEQ || idexOp < 0) {
+  if (idexOp == LW || idexOp > BEQ || idexOp < 0)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
   printf("\t\toffset = %d", statePtr->IDEX.offset);
-  if (idexOp != LW && idexOp != SW && idexOp != BEQ) {
+  if (idexOp != LW && idexOp != SW && idexOp != BEQ)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
@@ -359,22 +407,26 @@ void printState(stateType *statePtr) {
   printInstruction(statePtr->EXMEM.instr);
   printf(" )\n");
   printf("\t\tbranchTarget %d", statePtr->EXMEM.branchTarget);
-  if (exmemOp != BEQ) {
+  if (exmemOp != BEQ)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
   printf("\t\teq ? %s", (statePtr->EXMEM.eq ? "True" : "False"));
-  if (exmemOp != BEQ) {
+  if (exmemOp != BEQ)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
   printf("\t\taluResult = %d", statePtr->EXMEM.aluResult);
-  if (exmemOp > SW || exmemOp < 0) {
+  if (exmemOp > SW || exmemOp < 0)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
   printf("\t\tvalB = %d", statePtr->EXMEM.valB);
-  if (exmemOp != SW) {
+  if (exmemOp != SW)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
@@ -386,7 +438,8 @@ void printState(stateType *statePtr) {
   printInstruction(statePtr->MEMWB.instr);
   printf(" )\n");
   printf("\t\twriteData = %d", statePtr->MEMWB.writeData);
-  if (memwbOp >= SW || memwbOp < 0) {
+  if (memwbOp >= SW || memwbOp < 0)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
@@ -398,7 +451,8 @@ void printState(stateType *statePtr) {
   printInstruction(statePtr->WBEND.instr);
   printf(" )\n");
   printf("\t\twriteData = %d", statePtr->WBEND.writeData);
-  if (wbendOp >= SW || wbendOp < 0) {
+  if (wbendOp >= SW || wbendOp < 0)
+  {
     printf(" (Don't Care)");
   }
   printf("\n");
@@ -408,21 +462,25 @@ void printState(stateType *statePtr) {
 }
 
 // File
-#define MAXLINELENGTH                                                          \
+#define MAXLINELENGTH \
   1000 // MAXLINELENGTH is the max number of characters we read
 
-void readMachineCode(stateType *state, char *filename) {
+void readMachineCode(stateType *state, char *filename)
+{
   char line[MAXLINELENGTH];
   FILE *filePtr = fopen(filename, "r");
-  if (filePtr == NULL) {
+  if (filePtr == NULL)
+  {
     printf("error: can't open file %s", filename);
     exit(1);
   }
 
   printf("instruction memory:\n");
   for (state->numMemory = 0; fgets(line, MAXLINELENGTH, filePtr) != NULL;
-       ++state->numMemory) {
-    if (sscanf(line, "%x", state->instrMem + state->numMemory) != 1) {
+       ++state->numMemory)
+  {
+    if (sscanf(line, "%x", state->instrMem + state->numMemory) != 1)
+    {
       printf("error in reading address %d\n", state->numMemory);
       exit(1);
     }
