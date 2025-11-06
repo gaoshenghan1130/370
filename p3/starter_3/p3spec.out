@@ -183,7 +183,7 @@ state before cycle 4 starts:
 		pcPlus1 = 3
 		valA = 0
 		valB = 0
-		offset = 0 (Don't Care)
+		offset = 12345 (Don't Care)
 	EX/MEM pipeline register:
 		instruction = 0x01800000 ( halt )
 		branchTarget 2 (Don't Care)
@@ -228,7 +228,7 @@ state before cycle 5 starts:
 		offset = 0 (Don't Care)
 	EX/MEM pipeline register:
 		instruction = 0x00003039 ( add 0 0 12345 )
-		branchTarget 3 (Don't Care)
+		branchTarget 12348 (Don't Care)
 		eq ? True (Don't Care)
 		aluResult = 0
 		valB = 0 (Don't Care)
