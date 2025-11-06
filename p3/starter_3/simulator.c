@@ -260,12 +260,15 @@ int main(int argc, char *argv[])
     }
 
     // branch hazard: predict not taken
+    // if taken
     if (opcode(state.EXMEM.instr) == BEQ && state.EXMEM.eq)
     {
       // flush the following instruction
       newState.IFID.instr = NOOPINSTR;
       newState.IDEX.instr = NOOPINSTR;
+      newState.EXMEM.instr = NOOPINSTR;
       newState.pc = state.EXMEM.branchTarget;
+
     }
 
     /* ---------------------- WB stage --------------------- */
