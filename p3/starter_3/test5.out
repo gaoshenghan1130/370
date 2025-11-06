@@ -334,7 +334,7 @@ end state
 
 @@@
 state before cycle 7 starts:
-	pc = 2
+	pc = 7
 	data memory:
 		dataMem[ 0 ] = 0x00810008
 		dataMem[ 1 ] = 0x00820009
@@ -403,7 +403,7 @@ state before cycle 8 starts:
 		reg[ 7 ] = 0
 	IF/ID pipeline register:
 		instruction = 0x01C00000 ( noop )
-		pcPlus1 = 3 (Don't Care)
+		pcPlus1 = 8 (Don't Care)
 	ID/EX pipeline register:
 		instruction = 0x01C00000 ( noop )
 		pcPlus1 = 7 (Don't Care)
@@ -452,7 +452,7 @@ state before cycle 9 starts:
 		pcPlus1 = 3
 	ID/EX pipeline register:
 		instruction = 0x01C00000 ( noop )
-		pcPlus1 = 3 (Don't Care)
+		pcPlus1 = 8 (Don't Care)
 		valA = 0 (Don't Care)
 		valB = 0 (Don't Care)
 		offset = 0 (Don't Care)
@@ -504,7 +504,7 @@ state before cycle 10 starts:
 		offset = 1 (Don't Care)
 	EX/MEM pipeline register:
 		instruction = 0x01C00000 ( noop )
-		branchTarget 3 (Don't Care)
+		branchTarget 8 (Don't Care)
 		eq ? True (Don't Care)
 		aluResult = 0 (Don't Care)
 		valB = 0 (Don't Care)
