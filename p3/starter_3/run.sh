@@ -8,6 +8,8 @@ make assembler
 ./simulator test4.mc > test4.out
 ./assembler test5.as test5.mc
 ./simulator test5.mc > test5.out
+./assembler test6.as test6.mc
+./simulator test6.mc > test6.out
 
 
 ./assembler p3spec.as p3spec.mc

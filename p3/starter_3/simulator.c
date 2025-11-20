@@ -193,6 +193,17 @@ int main(int argc, char *argv[]) {
     int srcA = field0(state.IDEX.instr);
     int srcB = field1(state.IDEX.instr);
 
+    // Also forward from WBEND if needed
+    int wbendOp = opcode(state.WBEND.instr);
+    int wbendDest =
+        (wbendOp == LW) ? field1(state.WBEND.instr) : field2(state.WBEND.instr);
+    if (wbendDest == srcA &&
+        (wbendOp == LW || wbendOp == ADD || wbendOp == NOR))
+      exvalA = state.WBEND.writeData;
+    if (wbendDest == srcB &&
+        (wbendOp == LW || wbendOp == ADD || wbendOp == NOR))
+      exvalB = state.WBEND.writeData;
+
     // Forward from MEMWB
     if (previousDest == srcA &&
         (memwbOp == LW || memwbOp == ADD || memwbOp == NOR))
@@ -207,12 +218,13 @@ int main(int argc, char *argv[]) {
         (exmemOp == LW) ? field1(state.EXMEM.instr) : field2(state.EXMEM.instr);
 
     if (exmemDest == srcA &&
-        (exmemOp == LW || exmemOp == ADD || exmemOp == NOR))
+        (exmemOp == LW || exmemOp == ADD || exmemOp == NOR)) {
       exvalA = state.EXMEM.aluResult;
+    }
     if (exmemDest == srcB &&
-        (exmemOp == LW || exmemOp == ADD || exmemOp == NOR))
+        (exmemOp == LW || exmemOp == ADD || exmemOp == NOR)) {
       exvalB = state.EXMEM.aluResult;
-
+    }
     newState.EXMEM.valB = exvalB;
 
     newState.EXMEM.eq = (exvalA == exvalB) ? 1 : 0;
