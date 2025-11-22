@@ -67,8 +67,6 @@ void printCache(void);
  * called once in main(). You must implement this function.
  */
 void cache_init(int blockSize, int numSets, int blocksPerSet) {
-
-  printf("Initializing cache...\n");
   if (blockSize <= 0 || numSets <= 0 || blocksPerSet <= 0) {
     printf("error: input parameters must be positive numbers\n");
     exit(1);
@@ -198,15 +196,19 @@ int cache_access(int addr, int write_flag, int write_data) {
   }
 
   int victimIdx = set * cache.blocksPerSet + victimWay;
+   int evictTag = cache.blocks[victimIdx].tag;
+  int evictAddr = (evictTag * cache.numSets + set) * cache.blockSize;
 
   // If victim is valid and dirty -> write back whole block to memory
   if (cache.blocks[victimIdx].valid && cache.blocks[victimIdx].dirty) {
-    int evictTag = cache.blocks[victimIdx].tag;
-    int evictAddr = (evictTag * cache.numSets + set) * cache.blockSize;
+   
     printAction(evictAddr, cache.blockSize, cacheToMemory);
     for (int j = 0; j < cache.blockSize; ++j) {
       mem_access(evictAddr + j, 1, cache.blocks[victimIdx].data[j]);
     }
+  } else if (cache.blocks[victimIdx].valid && !cache.blocks[victimIdx].dirty) {
+    // valid but not dirty -> evict to nowhere
+    printAction(evictAddr, cache.blockSize, cacheToNowhere);
   }
 
   // Load the whole block from memory (block-aligned address)
