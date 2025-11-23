@@ -99,7 +99,6 @@ int exec(stateType *statePtr, struct instructionFields fields) {
     statePtr->pc += 1;
     break;
   case LW: {
-    printf("lw\n");
     int offset = convertNum(fields.offsetField);
     int address = statePtr->reg[fields.regA] + offset;
     if (address < 0 || address >= MEMORYSIZE) {

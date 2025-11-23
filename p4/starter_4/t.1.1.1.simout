@@ -8,7 +8,6 @@ $$$ transferring word [23-23] from the processor to the cache
 $$$ transferring word [23-23] from the cache to the memory
 $$$ transferring word [1-1] from the memory to the cache
 $$$ transferring word [1-1] from the cache to the processor
-lw
 $$$ transferring word [1-1] from the cache to nowhere
 $$$ transferring word [24-24] from the memory to the cache
 $$$ transferring word [24-24] from the cache to the processor
